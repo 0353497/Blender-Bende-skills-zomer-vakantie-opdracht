@@ -648,18 +648,41 @@ class OptionChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InputChip(
+      selected: isSelected,
+      showCheckmark: false, // Disable default checkmark position
       side: BorderSide(color: Color(0xffFC8A41), width: 2),
-      backgroundColor: isSelected ? Color(0xFFFFF8DC) : Colors.white,
+      backgroundColor: isSelected ? Color(0xFFFFF8DC) :  Colors.white,
       label: Padding(
         padding: const EdgeInsets.all(8.0),
         child: SizedBox(
           width: MediaQuery.of(context).size.width * 0.28,
-          child: Text(
-            text,
-            style: TextStyle(
-              color: Color(0xffFC8A41),
-              fontWeight: FontWeight.bold,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                text,
+                style: TextStyle(
+                  color: Color(0xffFC8A41),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              AnimatedSwitcher(
+                duration: Duration(milliseconds: 200),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return ScaleTransition(scale: animation, child: child);
+                },
+                child: isSelected
+                    ? SizedBox(
+                        key: ValueKey('check'),
+                        width: 21,
+                        height: 14,
+                        child: CustomPaint(
+                          painter: ThickCheckPainter(),
+                        ),
+                      )
+                    : SizedBox.shrink(key: ValueKey('empty')),
+              ),
+            ],
           ),
         ),
       ),
@@ -667,5 +690,29 @@ class OptionChip extends StatelessWidget {
         onSelectionChanged(!isSelected);
       },
     );
+  }
+}
+//deze is super irritant ik kon geen f*cking weight property van de icon widget gebruiken
+//dat werkte gewoon niet donders irritant, dat ik nu een painter moet gebruiken
+
+class ThickCheckPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.green
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6;
+
+    final path = Path();
+    path.moveTo(0, size.height / 2);
+    path.lineTo(size.width / 3, size.height);
+    path.lineTo(size.width, 0);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
   }
 }
