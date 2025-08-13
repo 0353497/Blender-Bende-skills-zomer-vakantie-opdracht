@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
+
+import 'package:google_fonts/google_fonts.dart';
 
 void main() {
   runApp(const MainApp());
@@ -13,6 +16,7 @@ class MainApp extends StatefulWidget {
 
 class _MainAppState extends State<MainApp> {
   int activeStep = 1;
+  bool isAanHetBestellen = false;
   Map<int, List<String>> selections = {
     1: [], 
     2: [],
@@ -49,6 +53,11 @@ class _MainAppState extends State<MainApp> {
         activeStep++;
       }
     });
+    if (activeStep == 3) {
+      setState(() {
+        isAanHetBestellen = true;
+      });
+    }
   }
 
   void updateSelection(int step, String option, bool isSelected) {
@@ -201,102 +210,259 @@ class _MainAppState extends State<MainApp> {
     List<Color> gradientColors = _generateGradientColors(smoothieColors);
 
     return MaterialApp(
+      theme: ThemeData(
+        textTheme: GoogleFonts.kanitTextTheme()
+      ),
       home: Scaffold(
         backgroundColor: Color(0xffFFC7A2),
-        body: SafeArea(
-          child: Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: Center(
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          spacing: 10,
-                          children: [
-                            OptionContainer(
-                              isExpanded: activeStep == 1,
-                              title: 'Basis',
-                              step: 1,
-                              options: ["Melk", "Water", "Yoghurt", "Havermelk"],
-                              selections: selections[1]!,
-                              onTap: () => setActiveStep(1),
-                              onSelectionChanged: (option, isSelected) => updateSelection(1, option, isSelected),
-                            ),
-                            
-                            OptionContainer(
-                              isExpanded: activeStep == 2,
-                              title: 'Fruit',
-                              step: 2,
-                              options: ["Aardbei", "Banaan", "Mango", "Blauwe bes", "Avocado"],
-                              selections: selections[2]!,
-                              onTap: () => setActiveStep(2),
-                              onSelectionChanged: (option, isSelected) => updateSelection(2, option, isSelected),
-                              onNextStep: goToNextStep,
-                            ),
-                            
-                            OptionContainer(
-                              isExpanded: activeStep == 3,
-                              title: 'Extra\'s',
-                              step: 3,
-                              options: ["Proteïne", "Vitamine boost", "Chiazaad", "Lijnzaad"],
-                              selections: selections[3]!,
-                              onTap: () => setActiveStep(3),
-                              onSelectionChanged: (option, isSelected) => updateSelection(3, option, isSelected),
-                              onNextStep: goToNextStep,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              
-              Expanded(
-                flex: 2,
-                child: Center(
-                  child: Stack(
-                    children: [
-                      ShaderMask(
-                        blendMode: BlendMode.modulate,
-                        shaderCallback: (bounds) {
-                          return LinearGradient(
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                            stops: colorStops,
-                            colors: gradientColors,
-                          ).createShader(bounds);
-                        },
-                        child: Image.asset(
-                          "assets/cup.png",
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      Positioned(
-                        top: 0,
-                        right: 0,
-                        child: Stack(
-                          children: [
-                            Image.asset(
-                                "assets/logo.png",
-                                width: 250,
-                                fit: BoxFit.contain,
-                                colorBlendMode: BlendMode.dstIn,
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [
+              Color(0xffFFEEE4),
+              Color(0xffFFC7A2),
+            ])
+          ),
+          child: SafeArea(
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Center(
+                    child: Column(
+                      children: [
+                        
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            spacing: 10,
+                            children: [
+                              if (!isAanHetBestellen)
+                              OptionContainer(
+                                isExpanded: activeStep == 1,
+                                title: 'Basis',
+                                step: 1,
+                                options: ["Melk", "Water", "Yoghurt", "Havermelk"],
+                                selections: selections[1]!,
+                                onTap: () => setActiveStep(1),
+                                onSelectionChanged: (option, isSelected) => updateSelection(1, option, isSelected),
                               ),
-                          ],
+                              if (!isAanHetBestellen)
+                              OptionContainer(
+                                isExpanded: activeStep == 2,
+                                title: 'Fruit',
+                                step: 2,
+                                options: ["Aardbei", "Banaan", "Mango", "Blauwe bes", "Avocado"],
+                                selections: selections[2]!,
+                                onTap: () => setActiveStep(2),
+                                onSelectionChanged: (option, isSelected) => updateSelection(2, option, isSelected),
+                                onNextStep: goToNextStep,
+                              ),
+                              if (!isAanHetBestellen)
+                              OptionContainer(
+                                isExpanded: activeStep == 3,
+                                title: 'Extra\'s',
+                                step: 3,
+                                options: ["Proteïne", "Vitamine boost", "Chiazaad", "Lijnzaad"],
+                                selections: selections[3]!,
+                                onTap: () => setActiveStep(3),
+                                onSelectionChanged: (option, isSelected) => updateSelection(3, option, isSelected),
+                                onNextStep: goToNextStep,
+                              ),
+                              if (isAanHetBestellen)
+                              SizedBox(
+                                width: 400,
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      spacing: 20,
+                                      children: [
+                                        IconButton(
+                                          style: ButtonStyle(
+                                            foregroundColor: WidgetStatePropertyAll(Color(0xffFC8A41)),
+                                            backgroundColor: WidgetStatePropertyAll(Colors.white)
+                                          ),
+                                          onPressed: () {
+                                          setState(() {
+                                            isAanHetBestellen = false;
+                                          });
+                                        }, icon: Icon(Icons.arrow_back)),
+                                        Text("Pas je bestelling aan",
+                                        style: TextStyle(color: Color(0xffFC8A41), fontWeight: FontWeight.w600),
+                                        )
+                                      ],
+                                    ),
+                                    SizedBox(
+                                      height: 100,
+                                    )
+                                  ],
+                                ),
+                              ),
+                              if (isAanHetBestellen)
+                             Container(
+                              height: 300,
+                              width: 400,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                color: Colors.white
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  spacing: 20,
+                                  children: [
+                                    Text("Geef je smoothie een naam",
+                                    style: TextStyle(
+                                      fontFamily: GoogleFonts.kanit().fontFamily,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xff6C3D51),
+                                      fontSize: 40
+                                    ),
+                                    ),
+                                    TextField(
+                                      textAlign: TextAlign.center,
+                                      decoration: InputDecoration(
+                                        enabledBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Color(0xffAA5498),
+                                            width: 2
+                                          ),
+                                          borderRadius: BorderRadius.circular(24)
+                                        ),
+                                        border:OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Color(0xffAA5498),
+                                            width: 4
+                                          ),
+                                          borderRadius: BorderRadius.circular(24)
+                                        ),
+                                        hintStyle: TextStyle(color: Color(0xffAA5498).withAlpha(100), fontWeight: FontWeight.bold, fontFamily: GoogleFonts.kanit().fontFamily),
+                                        hintText: "Voer een naam in..."
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 380,
+                                      height: 50,
+                                      child: TextButton(
+                                        style: ButtonStyle(
+                                          backgroundColor: WidgetStatePropertyAll(Color(0xffAA5498))
+                                        ),
+                                        onPressed: (){
+                                      
+                                        },
+                                      child: Text("Bestellen", 
+                                      style: TextStyle(
+                                        fontFamily: GoogleFonts.kanit().fontFamily,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600
+                                      ),
+                                      ),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                             )
+                            ],
+                          ),
                         ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+                
+                Expanded(
+                  flex: 2,
+                  child: Center(
+                    child: Stack(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(colors: [
+                              Color(0xffFFC7A2),
+                              Color(0xffFFEEE4),
+                            ])
+                          ),
+                          child: Cup(colorStops: colorStops, gradientColors: gradientColors),
+                          ),
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: Stack(
+                            children: [
+                              Image.asset(
+                                  "assets/logo.png",
+                                  width: 250,
+                                  fit: BoxFit.contain,
+                                  colorBlendMode: BlendMode.dstIn,
+                                ),
+                            ],
+                          ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+}
+
+class Cup extends StatefulWidget {
+  const Cup({
+    super.key,
+    required this.colorStops,
+    required this.gradientColors,
+  });
+
+  final List<double> colorStops;
+  final List<Color> gradientColors;
+
+  @override
+  State<Cup> createState() => _CupState();
+}
+
+class _CupState extends State<Cup> with TickerProviderStateMixin {
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      key: ValueKey(widget.gradientColors.toString()),
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 800),
+      builder: (context, value, child) {
+        return ShaderMask(
+        blendMode: BlendMode.modulate,
+        shaderCallback: (bounds) {
+          return LinearGradient(
+            transform: GradientRotation(
+              calcutlateRotation(value)
+            ),
+            begin: Alignment.bottomCenter,
+            end: Alignment(0.0, -value),
+            stops: widget.colorStops,
+            colors: widget.gradientColors,
+          ).createShader(bounds);
+        },
+        child: Image.asset(
+          "assets/cup.png",
+          fit: BoxFit.contain,
+        ),
+      ); }
+    );
+  }
+  
+  double calcutlateRotation(double value) {
+    return 0.1 * math.sin(value * math.pi * 2);
   }
 }
 
@@ -376,18 +542,23 @@ class _OptionContainerState extends State<OptionContainer> {
                     ),
                   ),
                   if (!widget.isExpanded && widget.selections.isNotEmpty)
-                    Text(
-                      widget.selections.join(", "),
-                      style: TextStyle(
-                        color: Color(0xffFC8A41),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
+                    SizedBox(
+                      width: 250,
+                      child: Text(
+                        widget.selections.join(", "),
+                        style: TextStyle(
+                          color: Color(0xffFC8A41),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.end,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     )
                 ],
               ),
               if (widget.isExpanded) SizedBox(height: 8),
-              if (widget.isExpanded && widget.step != 1)
+              if (widget.isExpanded && widget.step == 2)
                 Text(
                   "Kies minimaal 1 ingredient",
                   style: TextStyle(color: Colors.grey, fontSize: 12),
@@ -408,33 +579,34 @@ class _OptionContainerState extends State<OptionContainer> {
                               },
                             ),
                           )),
-                      SizedBox(height: 10),
+                      SizedBox(height: 4),
                       if (widget.step != 1)
                       SizedBox(
                         width: double.infinity,
                         child: TextButton(
                           style: ButtonStyle(
                             backgroundColor: WidgetStatePropertyAll(
-                              widget.selections.isEmpty 
-                                ? Colors.grey.shade300 
+                              widget.selections.isEmpty && widget.step == 2
+                                ? Color(0xffFC8A41).withAlpha(100)
                                 : Color(0xffFC8A41)
                             ),
                             foregroundColor: WidgetStatePropertyAll(
-                              widget.selections.isEmpty 
-                                ? Colors.grey.shade600 
-                                : Colors.white
+                              Colors.white
                             ),
                             shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                           ),
-                          onPressed: widget.selections.isEmpty ? null : () {
+                          onPressed: widget.selections.isEmpty && widget.step ==2 ? null : () {
                             if (widget.onNextStep != null) {
                               widget.onNextStep!();
                             }
                           },
                           child: Padding(
-                            padding: const EdgeInsets.all(8.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0,
+                              vertical: 14
+                            ),
                             child: Text(
-                              widget.step == 2 ? 'Naar extra\'s' : 'Maak smoothie',
+                              widget.step == 2 ? 'Kies je extra\'s' : 'Door naar bestellen',
                               style: TextStyle(
                                 fontWeight: FontWeight.w500,
                               ),
