@@ -17,6 +17,9 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> {
   int activeStep = 1;
   bool isAanHetBestellen = false;
+  int bestelNummer = 0;
+  bool laatBestelNummerzien = false;
+  final TextEditingController _nameController = TextEditingController();
   Map<int, List<String>> selections = {
     1: [], 
     2: [],
@@ -54,9 +57,7 @@ class _MainAppState extends State<MainApp> {
       }
     });
     if (activeStep == 3) {
-      setState(() {
-        isAanHetBestellen = true;
-      });
+    
     }
   }
 
@@ -102,6 +103,7 @@ class _MainAppState extends State<MainApp> {
   }
 
   List<double> _generateColorStops(List<Color> colors) {
+    // Calculate the original stops for proper height
     List<double> stops = [];
     
     double currentStop = 0.0;
@@ -140,10 +142,43 @@ class _MainAppState extends State<MainApp> {
       stops = [0.0, 1.0];
     }
     
+    if (laatBestelNummerzien) {
+      List<double> fluidStops = stops.take(stops.length - 2).toList();
+      if (fluidStops.isEmpty) {
+        return [0.0, 1.0];
+      }
+      return [...fluidStops, fluidStops.last, 1.0];
+    }
+    
     return stops;
   }
 
   List<Color> _generateGradientColors(List<Color> baseColors) {
+    if (laatBestelNummerzien) {
+      List<String> allSelectedIngredients = [
+        ...selections[1]!,
+        ...selections[2]!,
+        ...selections[3]!,
+      ];
+      
+      if (allSelectedIngredients.isNotEmpty) {
+        List<Color> selectedColors = allSelectedIngredients
+            .map((ingredient) => ingredientColors[ingredient] ?? Colors.white)
+            .toList();
+        Color blendedColor = _blendColors(selectedColors);
+        
+        List<Color> finalColors = [];
+        List<double> stops = _generateColorStops(baseColors);
+        
+        for (int i = 0; i < stops.length - 2; i++) {
+          finalColors.add(blendedColor);
+        }
+        finalColors.addAll([Colors.white, Colors.white]);
+        
+        return finalColors;
+      }
+    }
+    
     List<Color> gradientColors = [];
     
     if (selections[1]!.isNotEmpty) {
@@ -230,7 +265,88 @@ class _MainAppState extends State<MainApp> {
                   child: Center(
                     child: Column(
                       children: [
-                        
+                        if (laatBestelNummerzien)
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Row(),
+                              Container(
+                                width: 372,
+                                height: 312,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Color(0xffFFC7A2),
+                                      blurRadius: 5,
+                                      spreadRadius: 2
+                                    )
+                                  ]
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      Text("Bestelnummer",
+                                      style: TextStyle(
+                                        fontSize: 32,
+                                        color: Color(0xff6C3D51),
+                                        fontWeight: FontWeight.bold
+                                      ),
+                                      ),
+                                      Text('"${_nameController.text}"',
+                                      style: TextStyle(
+                                        color: Color(0xffFC8A41),
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w600
+                                      ),
+                                      ),
+                                      Text(bestelNummer.toString(),
+                                        style: TextStyle(
+                                          fontSize: 128,
+                                          color: Color(0xff6C3D51),
+                                          fontWeight: FontWeight.bold
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  spacing: 16,
+                                  children: [
+                                    Text("Bestel een nieuwe smoothie",
+                                    style: TextStyle(
+                                      color: Color(0xffFC8A41),
+                                      fontWeight: FontWeight.w600
+                                    ),
+                                    ),
+                                    IconButton(
+                                    onPressed: (){
+                                      setState(() {
+                                        _reset();
+                                      });
+                                    },
+                                    style: ButtonStyle(
+                                      foregroundColor: WidgetStatePropertyAll(Color(0xffFC8A41)),
+                                      backgroundColor: WidgetStatePropertyAll(Colors.white)
+                                    ),
+                                    icon: Icon(Icons.arrow_forward),
+                                    )
+                                  ],
+                                ),
+                              )
+                            ],
+                          )
+                          ),
+                        if (!laatBestelNummerzien)
                         Expanded(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -243,6 +359,7 @@ class _MainAppState extends State<MainApp> {
                                 step: 1,
                                 options: ["Melk", "Water", "Yoghurt", "Havermelk"],
                                 selections: selections[1]!,
+                                allSelections: selections,
                                 onTap: () => setActiveStep(1),
                                 onSelectionChanged: (option, isSelected) => updateSelection(1, option, isSelected),
                               ),
@@ -253,6 +370,7 @@ class _MainAppState extends State<MainApp> {
                                 step: 2,
                                 options: ["Aardbei", "Banaan", "Mango", "Blauwe bes", "Avocado"],
                                 selections: selections[2]!,
+                                allSelections: selections,
                                 onTap: () => setActiveStep(2),
                                 onSelectionChanged: (option, isSelected) => updateSelection(2, option, isSelected),
                                 onNextStep: goToNextStep,
@@ -264,9 +382,10 @@ class _MainAppState extends State<MainApp> {
                                 step: 3,
                                 options: ["Proteïne", "Vitamine boost", "Chiazaad", "Lijnzaad"],
                                 selections: selections[3]!,
+                                allSelections: selections,
                                 onTap: () => setActiveStep(3),
                                 onSelectionChanged: (option, isSelected) => updateSelection(3, option, isSelected),
-                                onNextStep: goToNextStep,
+                                onNextStep: () => selections[1]!.isNotEmpty && selections[2]!.isNotEmpty ?  setState(() { isAanHetBestellen = true;}) : null,
                               ),
                               if (isAanHetBestellen)
                               SizedBox(
@@ -319,6 +438,12 @@ class _MainAppState extends State<MainApp> {
                                     ),
                                     ),
                                     TextField(
+                                      controller: _nameController,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          
+                                        });
+                                      },
                                       textAlign: TextAlign.center,
                                       decoration: InputDecoration(
                                         enabledBorder: OutlineInputBorder(
@@ -344,10 +469,20 @@ class _MainAppState extends State<MainApp> {
                                       height: 50,
                                       child: TextButton(
                                         style: ButtonStyle(
-                                          backgroundColor: WidgetStatePropertyAll(Color(0xffAA5498))
+                                          backgroundColor: 
+                                          _nameController.value.text.isEmpty ?
+                                          WidgetStatePropertyAll(Color(0xffAA5498).withAlpha(100))
+                                          :
+                                          WidgetStatePropertyAll(Color(0xffAA5498))
                                         ),
-                                        onPressed: (){
-                                      
+                                        onPressed: 
+                                        _nameController.value.text.isEmpty ?
+                                         null :
+                                        (){
+                                          setState(() {
+                                            laatBestelNummerzien = true;
+                                            bestelNummer++;
+                                          });
                                         },
                                       child: Text("Bestellen", 
                                       style: TextStyle(
@@ -410,6 +545,18 @@ class _MainAppState extends State<MainApp> {
       ),
     );
   }
+  
+  void _reset() {
+    activeStep = 1;
+    isAanHetBestellen = false;
+    laatBestelNummerzien = false;
+    _nameController.clear();
+    selections = {
+      1: [], 
+      2: [],
+      3: [],
+    };
+  }
 }
 
 class Cup extends StatefulWidget {
@@ -457,7 +604,7 @@ class _CupState extends State<Cup> with TickerProviderStateMixin {
           "assets/cup.png",
           fit: BoxFit.contain,
         ),
-      ); }
+              ); }
     );
   }
   
@@ -477,6 +624,7 @@ class OptionContainer extends StatefulWidget {
     required this.selections,
     required this.onSelectionChanged,
     this.onNextStep,
+    required this.allSelections,
   });
   final bool isExpanded;
   final String title;
@@ -486,6 +634,7 @@ class OptionContainer extends StatefulWidget {
   final List<String> selections;
   final Function(String, bool) onSelectionChanged;
   final VoidCallback? onNextStep;
+  final Map<int, List<String>> allSelections;
 
   @override
   State<OptionContainer> createState() => _OptionContainerState();
@@ -587,6 +736,7 @@ class _OptionContainerState extends State<OptionContainer> {
                           style: ButtonStyle(
                             backgroundColor: WidgetStatePropertyAll(
                               widget.selections.isEmpty && widget.step == 2
+                              || (widget.allSelections[1]!.isEmpty || widget.allSelections[2]!.isEmpty) && widget.step == 3
                                 ? Color(0xffFC8A41).withAlpha(100)
                                 : Color(0xffFC8A41)
                             ),
@@ -595,7 +745,7 @@ class _OptionContainerState extends State<OptionContainer> {
                             ),
                             shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                           ),
-                          onPressed: widget.selections.isEmpty && widget.step ==2 ? null : () {
+                          onPressed: widget.selections.isEmpty && widget.step == 2 || (widget.allSelections[1]!.isEmpty || widget.allSelections[2]!.isEmpty) && widget.step == 3 ? null : () {
                             if (widget.onNextStep != null) {
                               widget.onNextStep!();
                             }
@@ -649,7 +799,7 @@ class OptionChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return InputChip(
       selected: isSelected,
-      showCheckmark: false, // Disable default checkmark position
+      showCheckmark: false, 
       side: BorderSide(color: Color(0xffFC8A41), width: 2),
       backgroundColor: isSelected ? Color(0xFFFFF8DC) :  Colors.white,
       label: Padding(
