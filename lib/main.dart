@@ -1,3 +1,7 @@
+import 'dart:ui';
+import 'dart:ui' as ui;
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
@@ -103,7 +107,6 @@ class _MainAppState extends State<MainApp> {
   }
 
   List<double> _generateColorStops(List<Color> colors) {
-    // Calculate the original stops for proper height
     List<double> stops = [];
     
     double currentStop = 0.0;
@@ -574,10 +577,31 @@ class Cup extends StatefulWidget {
 }
 
 class _CupState extends State<Cup> with TickerProviderStateMixin {
+  ui.Image? cupImage;
 
   @override
   void initState() {
     super.initState();
+    _loadCupImage();
+  }
+
+  Future<void> _loadCupImage() async {
+    final AssetImage assetImage = AssetImage('assets/cup.png');
+    final ImageStream stream = assetImage.resolve(ImageConfiguration.empty);
+    final Completer<ui.Image> completer = Completer<ui.Image>();
+    
+    stream.addListener(ImageStreamListener((ImageInfo info, bool _) {
+      completer.complete(info.image);
+    }));
+    
+    cupImage = await completer.future;
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Color _getWaveColor() {
+    return widget.gradientColors.lastWhere((color) => color != Colors.white, orElse: () => Colors.white,);
   }
 
   @override
@@ -587,29 +611,49 @@ class _CupState extends State<Cup> with TickerProviderStateMixin {
       tween: Tween(begin: 0.0, end: 1.0),
       duration: Duration(milliseconds: 800),
       builder: (context, value, child) {
-        return ShaderMask(
-        blendMode: BlendMode.modulate,
-        shaderCallback: (bounds) {
-          return LinearGradient(
-            transform: GradientRotation(
-              calcutlateRotation(value)
+        return Stack(
+          children: [
+           CustomPaint(
+              foregroundPainter: WaveFunction(_getWaveColor(), _calculateWavePosition(value),shift: value, cupImage: cupImage),
+              child: Image.asset("assets/cup.png", fit: BoxFit.contain,),
             ),
-            begin: Alignment.bottomCenter,
-            end: Alignment(0.0, -value),
-            stops: widget.colorStops,
-            colors: widget.gradientColors,
-          ).createShader(bounds);
-        },
-        child: Image.asset(
-          "assets/cup.png",
-          fit: BoxFit.contain,
-        ),
-              ); }
+            ShaderMask(
+              blendMode: BlendMode.modulate,
+              shaderCallback: (bounds) {
+                return LinearGradient(
+                  transform: GradientRotation(
+                    calcutlateRotation(value)
+                  ),
+                  begin: Alignment.bottomCenter,
+                  end: Alignment(0.0, -value),
+                  stops: widget.colorStops,
+                  colors: widget.gradientColors,
+                ).createShader(bounds);
+              },
+              child: Image.asset(
+                "assets/cup.png",
+                fit: BoxFit.contain,
+              ),
+            ),
+          ],
+        );
+      }
     );
   }
-  
+
   double calcutlateRotation(double value) {
     return 0.1 * math.sin(value * math.pi * 2);
+  }
+  
+  double _calculateWavePosition(double shift) {
+    if (widget.colorStops.length < 2) return 300.0;
+    
+    double lastIngredientStop = widget.colorStops[widget.colorStops.length - 2];
+    
+    double canvasHeight = 600.0;
+    double wavePosition = canvasHeight * (1.0 - lastIngredientStop);
+    
+    return wavePosition;
   }
 }
 
@@ -866,3 +910,62 @@ class ThickCheckPainter extends CustomPainter {
     return false;
   }
 }
+
+
+class WaveFunction extends CustomPainter {
+  final double shift;
+  final ui.Image? cupImage;
+  final Color color;
+  final double startHeight;
+
+  WaveFunction(this.color, this.startHeight, {super.repaint, required this.shift, this.cupImage});
+  
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.saveLayer(Rect.fromLTWH(0, 0, size.width, size.height), Paint());
+    
+    if (cupImage != null) {
+      final cupPaint = Paint();
+      canvas.drawImageRect(
+        cupImage!,
+        Rect.fromLTWH(0, 0, cupImage!.width.toDouble(), cupImage!.height.toDouble()),
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        cupPaint,
+      );
+    }
+    
+    final wavePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill
+      ..blendMode = BlendMode.srcIn;
+      
+    final path = Path();
+    
+    double amplitude = 10.0; 
+    double frequency = 0.05;
+    double horizontalShift = shift * 10.0;
+    //dit moet 2 zijn omdat hij van omhoog moet gaan en moet eindigen bij 1 want startheight * 1 = startheight
+    double waveY = startHeight * (2 - shift); 
+    path.moveTo(0, waveY);
+
+    for (double x = 0; x <= size.width; x += 1) {
+      double y = waveY + (amplitude - (shift * amplitude)) * math.sin((x * frequency) + horizontalShift);
+      path.lineTo(x, y);
+    }
+
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height + startHeight);
+    path.close();
+    
+    canvas.drawPath(path, wavePaint);
+    
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
+  }
+}
+
+
